@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+option go_package = "mikita.dev/dchat/proto";
+
+service Node {
+  rpc SendMessageR(SendMessageRequest) returns (SendMessageResponse);
+  rpc ReceiveMessageR(ReceiveMessageRequest) returns (Empty);
+  rpc GetUsersR(Empty) returns (GetUsersResponse);
+  rpc ConnectR(ConnectRequest) returns (ConnectResponse);
+  rpc DisconnectR(DisconnectRequest) returns (Empty);
+  rpc SetNeighboursR(SetNeighboursRequest) returns (Empty);
+  rpc GetNeighboursR(Empty) returns (GetNeighboursResponse);
+  rpc SendMissingNeighboursR(SendMissingNeighboursRequest) returns (Empty);
+  rpc IsLeaderR(Empty) returns (IsLeaderResponse);
+  rpc GetLeaderR(Empty) returns (GetLeaderResponse);
+  rpc ProbeR(Empty) returns (Empty);
+  rpc CheckTopologyR(CheckTopologyRequest) returns (Empty);
+  rpc SendCandidatureR(SendCandidatureRequest) returns (Empty);
+  rpc ResponseCandidatureR(ResponseCandidatureRequest) returns (Empty);
+  rpc SendElectedR(SendElectedRequest) returns (Empty);
+  rpc UpdateClockR(Empty) returns (UpdateClockResponse);
+}
+
+message Empty {}
+
+message SendMessageRequest {
+  uint64 receiverId = 1;
+  uint64 senderId = 2;
+  string content = 3;
+}
+
+message ReceiveMessageRequest {
+  uint64 senderId = 1;
+  string content = 2;
+  uint64 logicalClock = 3;
+}
+
+message SendMessageResponse {
+  uint64 logicalClock = 1;
+}
+
+message GetUsersResponse {
+  repeated uint64 users = 1;
+}
+
+message ConnectRequest {
+  uint64 id = 1;
+}
+
+message ConnectResponse {
+  uint64 prevId = 1;
+  uint64 nextId = 2;
+}
+
+message DisconnectRequest {
+  uint64 id = 1;
+}
+
+message SetNeighboursRequest {
+  uint64 prevId = 1;
+  uint64 nextId = 2;
+}
+
+message GetNeighboursResponse {
+  uint64 prevId = 1;
+  uint64 nextId = 2;
+}
+
+message SendMissingNeighboursRequest {
+  uint64 senderId = 1;
+  uint64 prevId = 2;
+  uint64 nextId = 3;
+}
+
+message IsLeaderResponse {
+  bool isLeader = 1;
+}
+
+message GetLeaderResponse {
+  uint64 leaderId = 1;
+}
+
+message CheckTopologyRequest {
+  uint64 senderId = 1;
+  uint64 creatorId = 2;
+}
+
+message CheckTopologyResponse {}
+
+message SendCandidatureRequest {
+  uint64 senderId = 1;
+  uint64 candidateId = 2;
+  uint64 dist = 3;
+  uint64 depth = 4;
+}
+
+message ResponseCandidatureRequest {
+  uint64 senderId = 1;
+  uint64 candidateId = 2;
+  bool accepted = 3;
+}
+
+message SendElectedRequest {
+  uint64 senderId = 1;
+  uint64 candidateId = 2;
+  repeated uint64 users = 3;
+}
+
+message UpdateClockResponse {
+  uint64 logicalClock = 1;
+}
