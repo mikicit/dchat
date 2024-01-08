@@ -7,7 +7,7 @@ The Hirschberg-Sinclair algorithm based on two-way ring topology was used as the
 This work was done as part of a semester project on Distributed Systems and Computing. 
 The main purpose of the work was to learn about distributed algorithms.
 Also for me personally it was interesting to get acquainted with Go, gRPC and Protocol Buffers. 
-The project is not perfect and does not include handling all sorts of ichcases, but it should work in most cases.
+The project is not perfect and does not include handling all sorts of edge cases, but it should work in most cases.
 
 ## How to Run
 
