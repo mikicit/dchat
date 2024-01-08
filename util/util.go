@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/mdns"
-	pb "mikita.dev/dchat/proto"
+	pb "github.com/mikicit/dchat/proto"
 	"sync"
 	"time"
 )

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"mikita.dev/dchat/core"
-	"mikita.dev/dchat/util"
+	"github.com/mikicit/dchat/core"
+	"github.com/mikicit/dchat/util"
 	"strconv"
 	"strings"
 )

@@ -3,9 +3,9 @@ package core
 import (
 	"fmt"
 	"github.com/hashicorp/mdns"
+	pb "github.com/mikicit/dchat/proto"
+	"github.com/mikicit/dchat/util"
 	"google.golang.org/grpc"
-	pb "mikita.dev/dchat/proto"
-	"mikita.dev/dchat/util"
 	"net"
 	"strconv"
 )

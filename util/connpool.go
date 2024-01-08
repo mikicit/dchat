@@ -3,9 +3,9 @@ package util
 import (
 	"context"
 	"fmt"
+	pb "github.com/mikicit/dchat/proto"
 	"google.golang.org/grpc"
 	"log"
-	pb "mikita.dev/dchat/proto"
 	"sync"
 	"sync/atomic"
 	"time"

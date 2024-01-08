@@ -1,4 +1,4 @@
-module mikita.dev/dchat
+module github.com/mikicit/dchat
 
 go 1.21.4
 

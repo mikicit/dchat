@@ -2,12 +2,16 @@
 
 ## Description
 
-Distributed chat on Go using gRPC and Protocol Buffers as a method of communication between nodes. 
-The Hirschberg-Sinclair algorithm based on two-way ring topology was used as the leader election algorithm. 
+Distributed chat on **Go** using **gRPC** and **Protocol Buffers** as a method of communication between nodes. 
+The **Hirschberg-Sinclair** algorithm based on two-way ring topology was used as the leader election algorithm. 
 This work was done as part of a semester project on Distributed Systems and Computing. 
 The main purpose of the work was to learn about distributed algorithms.
-Also for me personally it was interesting to get acquainted with Go, gRPC and Protocol Buffers. 
+
+Also for me personally it was interesting to get acquainted with **Go**, **gRPC** and **Protocol Buffers**. 
 The project is not perfect and does not include handling all sorts of edge cases, but it should work in most cases.
+
+It is worth mentioning that within the semester project the main task 
+was precisely the implementation of the **Hirschberg-Sinclair** leader election algorithm.
 
 ## How to Run
 
@@ -36,14 +40,24 @@ or
 
     go build -o chat
 
+## Supplements
+
+### Discovery
+
+The mDNS protocol is used to search for services. The **[mDNS](https://github.com/hashicorp/mdns)** 
+package from **HashiCorp** is used as a **Discovery Service**.
+
 ### Logs
 
-Default path for logs is `/var/log/dchat`. 
+Default path for logs is `/var/log/dchat`. If `/var/log/` doesn't exist, 
+logs will be saved in the folder `./logs` of the project root.
 In this folder you can find logs for the entire app and for the chat messages.
 
 ## How to Use
 
 ### Commands
+
+
 
 
 

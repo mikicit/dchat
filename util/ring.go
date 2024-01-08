@@ -3,6 +3,7 @@ package util
 import (
 	"container/list"
 	"fmt"
+	"slices"
 	"sync"
 )
 
@@ -93,6 +94,26 @@ func (s *Ring) Clear() {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	s.data.Init()
+}
+
+// Sort sorts elements in the ring.
+func (s *Ring) Sort() {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
+	values := make([]uint64, s.data.Len())
+	i := 0
+
+	for element := s.data.Front(); element != nil; element = element.Next() {
+		values[i] = element.Value.(uint64)
+		i++
+	}
+
+	slices.Sort(values)
+	s.data.Init()
+	for _, value := range values {
+		s.data.PushBack(value)
+	}
 }
 
 // insert inserts a value into the ring.

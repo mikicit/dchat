@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	pb "mikita.dev/dchat/proto"
-	"mikita.dev/dchat/util"
+	pb "github.com/mikicit/dchat/proto"
+	"github.com/mikicit/dchat/util"
 	"strconv"
 	"strings"
 	"sync"
@@ -89,11 +89,13 @@ func (n *Node) startPeriodicClockUpdate() {
 					logger.App.Println("Leader with ID", n.leaderId.Load(), "is dead")
 					result := n.CheckTopology()
 
-					if result && n.state == NOT_INVOLVED {
-						n.startElection()
+					if n.state == NOT_INVOLVED {
+						if result {
+							n.startElection()
+						} else {
+							n.repairTopology()
+						}
 					}
-
-					//n.repairTopology()
 
 					break
 				}
@@ -638,7 +640,12 @@ func (n *Node) startElection() {
 	}
 }
 
-// repairTopology starts topology repair
+/*
+repairTopology starts election.
+This method is used in this implementation more for demonstration purposes.
+Hypothetically, with a little tweaking it could most likely provide ring recovery in critical situations
+(when not only the leader died, but also other nodes, making the ring completely broken).
+*/
 func (n *Node) repairTopology() {
 	logger.App.Println("Building ring...")
 	services, err := util.DiscoverServices()
@@ -649,25 +656,25 @@ func (n *Node) repairTopology() {
 	n.ring.Clear()
 	n.ring.Insert(n.Id)
 
+	// Find all services with the same lost leader
 	for _, service := range services {
 		userId, err := strconv.ParseUint(service.Info, 10, 64)
-		if err != nil {
-			logger.App.Fatalf("Failed to parse service ID: %v", err)
-		}
-
-		if userId == n.Id || userId == n.leaderId.Load() {
+		if err != nil || userId == n.Id || userId == n.leaderId.Load() {
 			continue
 		}
 
 		leaderId, err := n.getLeader(userId)
 		if err != nil {
-
+			continue
 		}
 
 		if leaderId == n.leaderId.Load() {
 			n.ring.Insert(userId)
 		}
 	}
+
+	// Sort the ring for ensuring that every node has the same ring
+	n.ring.Sort()
 
 	prevId, nextId, err := n.ring.Neighbors(n.Id)
 	if err != nil {
