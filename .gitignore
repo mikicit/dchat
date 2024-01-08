@@ -1,0 +1,77 @@
+# Go
+*.exe
+*.test
+*.prof
+*.out
+*.test
+*.trace
+*.log
+*.svg
+*.cover
+*.cprof
+
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Application binaries
+app
+app.exe
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+*.dll
+
+# Folders
+_obj
+_test
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Output of the `go tool trace` command
+*.trace
+
+# Output of the `go tool pprof` command
+*.pprof
+
+# Output of the `go tool cprof` command
+*.cprof
+
+# Output of the `go tool cover` command
+*.cover
+
+# Generated files from the `protobuf` tool
+*.pb.go
+
+# Compiled Protobuf files
+*.pb.*
+
+# Generated files from the `gRPC` tool
+*_grpc.pb.go
+*_grpc.pb.gw.go
+
+# JetBrains IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+*.iws
+*.ids
+*.go
+*.orig
+
+# End of File
