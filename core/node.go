@@ -881,6 +881,7 @@ func (n *Node) SendElectedR(_ context.Context, message *pb.SendElectedRequest) (
 		n.ring.Clear()
 		n.ring.InsertAll(message.Users)
 		n.ring.Remove(n.Id)
+		n.ring.Reverse()
 
 		go func() {
 			_ = n.sendNeighbours(n.prevId.Load(), 0, n.nextId.Load())

@@ -116,6 +116,33 @@ func (s *Ring) Sort() {
 	}
 }
 
+// Reverse reverses elements in the ring.
+func (s *Ring) Reverse() {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
+	if s.data.Len() < 2 {
+		return
+	}
+
+	values := make([]uint64, s.data.Len())
+	i := 0
+
+	for element := s.data.Front(); element != nil; element = element.Next() {
+		values[i] = element.Value.(uint64)
+		i++
+	}
+
+	for i, j := 0, len(values)-1; i < j; i, j = i+1, j-1 {
+		values[i], values[j] = values[j], values[i]
+	}
+
+	s.data.Init()
+	for _, value := range values {
+		s.data.PushBack(value)
+	}
+}
+
 // insert inserts a value into the ring.
 func (s *Ring) insert(value uint64) {
 	s.data.PushBack(value)
