@@ -38,6 +38,7 @@ type Node struct {
 	topologyDone chan bool
 	mtx          sync.Mutex
 	logicalClock atomic.Uint64
+	syncRing     chan bool
 }
 
 // NewNode creates a new node
@@ -49,10 +50,12 @@ func NewNode() *Node {
 		respOk:       true,
 		electionDone: make(chan bool),
 		topologyDone: make(chan bool),
+		syncRing:     make(chan bool),
 	}
 
 	node.generateId()
 
+	go node.startSyncRing()
 	go node.startPeriodicClockUpdate()
 	go node.startPeriodicNeighboursProbe()
 	return node
@@ -71,13 +74,24 @@ func (n *Node) String() string {
 	return str.String()
 }
 
+func (n *Node) startSyncRing() {
+	ticker := time.Tick(200 * time.Millisecond)
+	for {
+		select {
+		case <-ticker:
+			n.syncRing <- true
+		default:
+		}
+	}
+}
+
 // startPeriodicClockUpdate starts periodic clock update
 func (n *Node) startPeriodicClockUpdate() {
 	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		if n.leaderId.Load() != 0 && !n.isLeader() && n.state == NOT_INVOLVED {
+		if !n.isLeader() && n.state == NOT_INVOLVED {
 			for attempt := 1; attempt <= 5; attempt++ {
 				resp, err := n.updateClock()
 				if err == nil {
@@ -109,11 +123,11 @@ func (n *Node) startPeriodicClockUpdate() {
 
 // startPeriodicNeighboursProbe starts periodic neighbours probe
 func (n *Node) startPeriodicNeighboursProbe() {
-	ticker := time.NewTicker(time.Second * 15)
+	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		if n.leaderId.Load() != 0 && !n.isLeader() && n.state == NOT_INVOLVED {
+		if !n.isLeader() && n.state == NOT_INVOLVED {
 			prevId, nextId := uint64(0), uint64(0)
 
 			wg := sync.WaitGroup{}
@@ -505,6 +519,9 @@ func (n *Node) GetNeighboursR(_ context.Context, _ *pb.Empty) (*pb.GetNeighbours
 
 // sendMissingNeighbours sends missing neighbours message to the leader
 func (n *Node) sendMissingNeighbours(prevId, nextId uint64) {
+	if n.state != NOT_INVOLVED {
+		return
+	}
 	logger.App.Println("Sending missing neighbours message to leader with ID", n.leaderId.Load())
 
 	conn, err := util.GetConnectionPool().GetConnection(strconv.FormatUint(n.leaderId.Load(), 10))
@@ -607,7 +624,6 @@ func (n *Node) ProbeR(_ context.Context, _ *pb.Empty) (*pb.Empty, error) {
 // startElection starts election
 func (n *Node) startElection() {
 	if n.state != NOT_INVOLVED {
-		logger.App.Println("Election already started")
 		return
 	}
 	logger.App.Println("Starting election")
@@ -743,6 +759,8 @@ func (n *Node) CheckTopologyR(_ context.Context, message *pb.CheckTopologyReques
 func (n *Node) sendCandidature(receiverId, candidateId, dist, depth uint64) {
 	logger.App.Println("Sending candidature message to node with ID", receiverId)
 
+	<-n.syncRing
+
 	conn, err := util.GetConnectionPool().GetConnection(strconv.FormatUint(receiverId, 10))
 	if err != nil {
 		return
@@ -785,10 +803,12 @@ func (n *Node) SendCandidatureR(_ context.Context, message *pb.SendCandidatureRe
 		} else {
 			go n.responseCandidature(message.SenderId, message.CandidateId, true)
 		}
-	} else if message.CandidateId == n.Id && n.state != ELECTED {
-		n.state = ELECTED
-		n.leaderId.Store(n.Id)
+	} else if message.CandidateId == n.Id {
+		if n.state != ELECTED {
+			n.state = ELECTED
+		}
 
+		n.leaderId.Store(n.Id)
 		n.electionDone <- true
 
 		nextId := n.getNextToPass(message.SenderId)
@@ -801,6 +821,8 @@ func (n *Node) SendCandidatureR(_ context.Context, message *pb.SendCandidatureRe
 // responseCandidature sends response candidature message to the node
 func (n *Node) responseCandidature(receiverId uint64, candidateId uint64, accepted bool) {
 	logger.App.Println("Sending response candidature message to node with ID", receiverId)
+
+	<-n.syncRing
 
 	conn, err := util.GetConnectionPool().GetConnection(strconv.FormatUint(receiverId, 10))
 	if err != nil {
@@ -846,6 +868,8 @@ func (n *Node) ResponseCandidatureR(_ context.Context, message *pb.ResponseCandi
 func (n *Node) sendElected(receiverId, leaderId uint64, users []uint64) {
 	logger.App.Println("Sending elected node message to node with ID", receiverId)
 
+	<-n.syncRing
+
 	conn, err := util.GetConnectionPool().GetConnection(strconv.FormatUint(receiverId, 10))
 	if err != nil {
 		return
@@ -878,10 +902,14 @@ func (n *Node) SendElectedR(_ context.Context, message *pb.SendElectedRequest) (
 		n.leaderId.Store(message.CandidateId)
 		n.state = NOT_INVOLVED
 	} else {
+		// Update leader ring info and leave the ring
 		n.ring.Clear()
 		n.ring.InsertAll(message.Users)
 		n.ring.Remove(n.Id)
-		n.ring.Reverse()
+
+		if message.SenderId != n.prevId.Load() {
+			n.ring.Reverse()
+		}
 
 		go func() {
 			_ = n.sendNeighbours(n.prevId.Load(), 0, n.nextId.Load())
